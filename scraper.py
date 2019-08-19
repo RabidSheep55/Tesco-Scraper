@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 from bs4 import BeautifulSoup
 
@@ -10,10 +11,7 @@ from bs4 import BeautifulSoup
 
 ################## Fetch the Data
 print("Fetching page data")
-
-chrome_options = Options()
-chrome_options.add_argument("--headless")
-driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome()
 
 # First find out how many items are on offer
 driver.get("https://www.tesco.com/groceries/en-GB/promotions/alloffers?page=1&count=100")
