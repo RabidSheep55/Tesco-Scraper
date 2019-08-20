@@ -17,7 +17,7 @@ NOTES:
     - Why do they still display unavailable products? (53/7522)
 '''
 
-batchSize = 100 # max 1000; optimal around 100
+batchSize = 10 # max 1000; optimal around 100
 headless = True
 
 # Fetch the products
@@ -39,7 +39,8 @@ def fetcher():
 
     # Now fetch and extract their information by batches
     unavailable = 0
-    products = []
+    itemsOnSale = 10
+    productList = []
     for i in range(1, int(itemsOnSale/batchSize) + 1):
         url = "https://www.tesco.com/groceries/en-GB/promotions/alloffers?page={}&count={}".format(str(i), str(batchSize))
         driver.get(url)
@@ -56,20 +57,33 @@ def fetcher():
                 itemLink = "https://www.tesco.com/" + item.find("div", {"class": "product-details--content"}).find("a")['href']
                 itemOffer = item.find("span", {"class": "offer-text"}).text
                 itemPrice = item.find("span", {"class": "value"}).text
-                product = [{"name": itemName,
-                              "link": itemLink,
-                              "price": float(itemPrice),
-                              "offer": itemOffer}]
-                products += product
+                # product = [{"name": itemName, "link": itemLink, "price": float(itemPrice), "offer": itemOffer}]
+                product = [{"name": itemName, "price": float(itemPrice), "offer": str(itemOffer)}]
+                productList += product
             else:
                 unavailable += 1
 
-    print(products)
-    print("There were", unavailable, "unavailable products")
+    # print(products)
+    # print("There were", unavailable, "unavailable products")
+    return productList
 
-# Turns the offer phrase into a percentage, or other usable form
-def offerProcessor(offer):
-    None
+# Turns the offer phrase into a percentage
+def offerProcessor(productList):
+    for product in productList:
+        print("Offer:", product["offer"])
+        was = re.search(r"Was\s£?([\d|.]+p?)", product["offer"])  # Regex captures the old price from the offer phrase
+        if was:
+            if "p" in was[1]:
+                prev = float("0." + was[1][:-1])
+            else:
+                prev = float(was[1])
+            product["reduction"] = round((prev - product["price"])/prev, 3)
+
+    return productList
 
 if __name__ == '__main__':
-    fetcher()
+    productList = fetcher()
+    products = offerProcessor(productList)
+
+    for a in products:
+        print(a)
