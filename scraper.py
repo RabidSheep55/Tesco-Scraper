@@ -3,9 +3,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from prettytable import PrettyTable
 import re
 from bs4 import BeautifulSoup
-from time import time
 
 '''
 Scrapes the tesco's deal page and saves the products in an ordered spreadsheet!
@@ -17,10 +17,29 @@ NOTES:
     - Why do they still display unavailable products? (53/7522)
 '''
 
-batchSize = 10 # max 1000; optimal around 100
+batchSize = 100 # max 1000; optimal around 100
 headless = True
 
 # Fetch the products
+class Product:
+    def __init__(self, name, link, offer, price):
+        self.name = name
+        self.link = link
+        self.offer = offer
+        self.price = price
+
+    def processOffer(self):  # Turns the offer phrase into a percentage
+        oldPrice = re.search(r"Was\s£?([\d|.]+p?)", self.offer)  # Regex captures the old price from the offer phrase
+        if oldPrice:
+            if "p" in oldPrice[1]:
+                prev = float("0." + oldPrice[1][:-1])
+            else:
+                prev = float(oldPrice[1])
+            self.reduction = round((prev - self.price)/prev, 3)
+        else:
+            self.reduction = 0
+        # print("Processed offer", self.offer, "into", self.reduction)
+
 def fetcher():
     if headless:
         chrome_options = Options()
@@ -39,7 +58,7 @@ def fetcher():
 
     # Now fetch and extract their information by batches
     unavailable = 0
-    itemsOnSale = 10
+    itemsOnSale = 1000
     productList = []
     for i in range(1, int(itemsOnSale/batchSize) + 1):
         url = "https://www.tesco.com/groceries/en-GB/promotions/alloffers?page={}&count={}".format(str(i), str(batchSize))
@@ -57,33 +76,28 @@ def fetcher():
                 itemLink = "https://www.tesco.com/" + item.find("div", {"class": "product-details--content"}).find("a")['href']
                 itemOffer = item.find("span", {"class": "offer-text"}).text
                 itemPrice = item.find("span", {"class": "value"}).text
-                # product = [{"name": itemName, "link": itemLink, "price": float(itemPrice), "offer": itemOffer}]
-                product = [{"name": itemName, "price": float(itemPrice), "offer": str(itemOffer)}]
-                productList += product
+                productList += [Product(itemName, itemLink, itemOffer, float(itemPrice))]
+
             else:
                 unavailable += 1
 
-    # print(products)
-    # print("There were", unavailable, "unavailable products")
+    print("There were", unavailable, "unavailable products")
     return productList
 
-# Turns the offer phrase into a percentage
-def offerProcessor(productList):
-    for product in productList:
-        print("Offer:", product["offer"])
-        was = re.search(r"Was\s£?([\d|.]+p?)", product["offer"])  # Regex captures the old price from the offer phrase
-        if was:
-            if "p" in was[1]:
-                prev = float("0." + was[1][:-1])
-            else:
-                prev = float(was[1])
-            product["reduction"] = round((prev - product["price"])/prev, 3)
-
-    return productList
+def sortkey(product):
+    return product.reduction
 
 if __name__ == '__main__':
     productList = fetcher()
-    products = offerProcessor(productList)
 
-    for a in products:
-        print(a)
+    for product in productList:
+        product.processOffer()
+
+    sprods = sorted(productList, key=sortkey, reverse=True)
+
+    table = PrettyTable(['Name', 'Price', 'Reduction'])
+    for a in sprods:
+        if a.reduction != 0:
+            table.add_row([a.name, a.price, str(round(a.reduction*100, 1)) + "%"])
+
+    print(table)
