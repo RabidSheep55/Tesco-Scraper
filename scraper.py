@@ -36,8 +36,20 @@ class Product:
             else:
                 prev = float(oldPrice[1])
             self.reduction = round((prev - self.price)/prev, 3)
+            self.multibuy = 1
         else:
-            self.reduction = 0
+            bunchDeal = re.search(r"(\d+)\sfor\s£?([\d|.]+p?)", self.offer)  # Extracts the multibuy offer details
+            if bunchDeal:
+                self.multibuy = int(bunchDeal[1])
+                if "p" in bunchDeal[2]:
+                    combinedPrice = float("0." + bunchDeal[2][:-1])
+                else:
+                    combinedPrice = float(bunchDeal[2])
+                effectiveCost = self.multibuy * self.price
+                self.reduction = round((effectiveCost - combinedPrice)/combinedPrice, 3)
+            else:
+                self.reduction = 0
+
         # print("Processed offer", self.offer, "into", self.reduction)
 
 def fetcher():
@@ -58,7 +70,7 @@ def fetcher():
 
     # Now fetch and extract their information by batches
     unavailable = 0
-    itemsOnSale = 1000
+    # itemsOnSale = 100
     productList = []
     for i in range(1, int(itemsOnSale/batchSize) + 1):
         url = "https://www.tesco.com/groceries/en-GB/promotions/alloffers?page={}&count={}".format(str(i), str(batchSize))
@@ -77,7 +89,6 @@ def fetcher():
                 itemOffer = item.find("span", {"class": "offer-text"}).text
                 itemPrice = item.find("span", {"class": "value"}).text
                 productList += [Product(itemName, itemLink, itemOffer, float(itemPrice))]
-
             else:
                 unavailable += 1
 
@@ -95,9 +106,9 @@ if __name__ == '__main__':
 
     sprods = sorted(productList, key=sortkey, reverse=True)
 
-    table = PrettyTable(['Name', 'Price', 'Reduction'])
+    table = PrettyTable(['Item Name', 'Price', 'Reduction', 'Multibuy'])
     for a in sprods:
         if a.reduction != 0:
-            table.add_row([a.name, a.price, str(round(a.reduction*100, 1)) + "%"])
+            table.add_row([a.name, a.price, str(round(a.reduction*100, 1)) + "%", a.multibuy])
 
     print(table)
