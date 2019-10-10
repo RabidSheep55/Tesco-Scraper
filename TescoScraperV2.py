@@ -15,6 +15,10 @@ Scraping is done with selenium and sifting of the page source is done with beaut
 NOTES:
     - More items are shown to be on sale when not logged in... why?
     - Why do they still display unavailable products? (53/7522)
+
+TODO:
+    - Fix issues when dealing with loose items (reduction price is given by kg)
+    - Fix Missreading of multibuy offers for "Cheapest product free" offers
 '''
 
 batchSize = 100 # max 1000; optimal around 100
@@ -45,13 +49,14 @@ class Product:
             self.reduction = round((prev - self.price)/prev, 3)
             self.multibuy = 1
         else:
-            bunchDeal = re.search(r"(\d+)\sfor\s£?([\d|.]+p?)", self.offer)  # Extracts the multibuy offer details
+            bunchDeal = re.search(r"(\d+)\sfor\s(£?[\d|.]+p?)", self.offer)  # Extracts the multibuy offer details
             if bunchDeal:
                 self.multibuy = int(bunchDeal[1])
                 if "p" in bunchDeal[2]:
                     combinedPrice = float("0." + bunchDeal[2][:-1])
+                elif "£" in bunchDeal[1]:
+                    combinedPrice = float(bunchDeal[2][1:])
                 else:
-                    combinedPrice = float(bunchDeal[2])
                 reducedPrice = combinedPrice / self.multibuy
                 self.reduction = round((self.price - reducedPrice)/self.price, 3)
             elif re.search(r"Meal Deal", self.offer):
