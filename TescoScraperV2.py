@@ -18,16 +18,16 @@ NOTES:
 '''
 
 batchSize = 100 # max 1000; optimal around 100
-headless = True
+headless = False
 
-categories = [{
-"Fresh Fruit": "https://www.tesco.com/groceries/en-GB/promotions/alloffers?department=Fresh%20Fruit&viewAll=department&page={}&count={}"
-"Fresh Vegetables" : "https://www.tesco.com/groceries/en-GB/promotions/alloffers?department=Fresh%20Vegetables&viewAll=department&page={}&count={}"
-}]
+# categories = [{
+# "Fresh Fruit": "https://www.tesco.com/groceries/en-GB/promotions/alloffers?department=Fresh%20Fruit&viewAll=department&page={}&count={}"
+# "Fresh Vegetables" : "https://www.tesco.com/groceries/en-GB/promotions/alloffers?department=Fresh%20Vegetables&viewAll=department&page={}&count={}"
+# }]
 
 
 
-# Fetch the products"
+# Fetch the products
 class Product:
     def __init__(self, name, link, offer, price):
         self.name = name
@@ -52,10 +52,14 @@ class Product:
                     combinedPrice = float("0." + bunchDeal[2][:-1])
                 else:
                     combinedPrice = float(bunchDeal[2])
-                effectiveCost = self.multibuy * self.price
-                self.reduction = round((effectiveCost - combinedPrice)/combinedPrice, 3)
+                reducedPrice = combinedPrice / self.multibuy
+                self.reduction = round((self.price - reducedPrice)/self.price, 3)
+            elif re.search(r"Meal Deal", self.offer):
+                self.reduction = 0
+                self.multibuy = "MEAL DEAL"
             else:
                 self.reduction = 0
+                self.multibuy = "UNKNOWN"
 
         # print("Processed offer", self.offer, "into", self.reduction)
 
@@ -77,7 +81,7 @@ def fetcher():
 
     # Now fetch and extract their information by batches
     unavailable = 0
-    # itemsOnSale = 100
+    itemsOnSale = 500
     productList = []
     for i in range(1, int(itemsOnSale/batchSize) + 1):
         url = "https://www.tesco.com/groceries/en-GB/promotions/alloffers?page={}&count={}".format(str(i), str(batchSize))
@@ -115,7 +119,7 @@ if __name__ == '__main__':
 
     table = PrettyTable(['Item Name', 'Price', 'Reduction', 'Multibuy'])
     for a in sprods:
-        if a.reduction != 0:
-            table.add_row([a.name, a.price, str(round(a.reduction*100, 1)) + "%", a.multibuy])
+        # if a.reduction != 0:
+        table.add_row([a.name, a.price, str(round(a.reduction*100, 1)) + "%", a.multibuy])
 
     print(table)
