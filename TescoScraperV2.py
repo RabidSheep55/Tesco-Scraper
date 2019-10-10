@@ -54,11 +54,16 @@ class Product:
                 self.multibuy = int(bunchDeal[1])
                 if "p" in bunchDeal[2]:
                     combinedPrice = float("0." + bunchDeal[2][:-1])
-                elif "£" in bunchDeal[1]:
+                    reducedPrice = combinedPrice / self.multibuy
+                    self.reduction = round((self.price - reducedPrice)/self.price, 3)
+                elif "£" in bunchDeal[2]:
                     combinedPrice = float(bunchDeal[2][1:])
+                    reducedPrice = combinedPrice / self.multibuy
+                    self.reduction = round((self.price - reducedPrice)/self.price, 3)
                 else:
-                reducedPrice = combinedPrice / self.multibuy
-                self.reduction = round((self.price - reducedPrice)/self.price, 3)
+                    combinedPrice = int(bunchDeal[2])
+                    self.reduction = round((self.multibuy - combinedPrice)/self.multibuy, 3)
+
             elif re.search(r"Meal Deal", self.offer):
                 self.reduction = 0
                 self.multibuy = "MEAL DEAL"
