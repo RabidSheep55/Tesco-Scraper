@@ -25,6 +25,7 @@ TODO:
 
 batchSize = 100 # max 1000; optimal around 100
 headless = False
+path_to_webDriver = r"C:\chromedriver_win32\chromedriver.exe"
 
 # categories = [{
 # "Fresh Fruit": "https://www.tesco.com/groceries/en-GB/promotions/alloffers?department=Fresh%20Fruit&viewAll=department&page={}&count={}"
@@ -79,9 +80,9 @@ def fetcher():
     if headless:
         chrome_options = Options()
         chrome_options.add_argument("--headless")
-        driver = webdriver.Chrome(options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options, executable_path=path_to_webDriver)
     else:
-        driver = webdriver.Chrome()
+        driver = webdriver.Chrome(executable_path=path_to_webDriver)
 
     # First find out how many items are on offer
     driver.get("https://www.tesco.com/groceries/en-GB/promotions/alloffers")
@@ -116,6 +117,7 @@ def fetcher():
                 unavailable += 1
 
     print("There were", unavailable, "unavailable products")
+    driver.quit()
     return productList
 
 def sortkey(product):
