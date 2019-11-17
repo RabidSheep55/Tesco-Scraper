@@ -12,6 +12,8 @@ Scrapes the tesco's deal page and saves the products in an ordered spreadsheet!
 Idea inspired by https://github.com/duplaja/shipt-sales-to-csv
 Scraping is done with selenium and sifting of the page source is done with beautiful soup
 
+UPDATE CHROMEDRIVER: https://codeofclimber.ru/2019/getting-chromedriver-updates/
+
 NOTES:
     - More items are shown to be on sale when not logged in... why?
     - Why do they still display unavailable products? (53/7522)
