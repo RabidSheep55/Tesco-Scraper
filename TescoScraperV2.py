@@ -24,7 +24,7 @@ TODO:
 '''
 
 batchSize = 100 # max 1000; optimal around 100
-headless = False
+headless = True
 path_to_webDriver = r"C:\chromedriver_win32\chromedriver.exe"
 
 # categories = [{
@@ -94,7 +94,6 @@ def fetcher():
 
     # Now fetch and extract their information by batches
     unavailable = 0
-    itemsOnSale = 500
     productList = []
     for i in range(1, int(itemsOnSale/batchSize) + 1):
         url = "https://www.tesco.com/groceries/en-GB/promotions/alloffers?page={}&count={}".format(str(i), str(batchSize))
@@ -115,6 +114,7 @@ def fetcher():
                 productList += [Product(itemName, itemLink, itemOffer, float(itemPrice))]
             else:
                 unavailable += 1
+                print("Found an unavailable product, total:", unavailable)
 
     print("There were", unavailable, "unavailable products")
     driver.quit()
